@@ -430,7 +430,7 @@ def AY_Search(q, w1 = 1, w2 = 1, w3 = 0.25, w4 = 1,wn = 1.16):
             res.append((k,score_body.get(k, 0) + PR.get(k, 0)))
         # Sort by the relevance score
         res = sorted(res, key=lambda x: x[1], reverse=True)
-        res = [(i[0], DT[i[0]]) for i in res][:45]
+        res = [(i[0], DT[i[0]]) for i in res][:10]
         return res
 
     # else, calculate scores for each part of the doc
@@ -444,5 +444,5 @@ def AY_Search(q, w1 = 1, w2 = 1, w3 = 0.25, w4 = 1,wn = 1.16):
         res.append((d,w1*score_title.get(d,0)+w2*score_body.get(d,0)+w3*score_anchor.get(d,0)+w4*NPR.get(d,0)))
     # Sort by the relevance score
     res = sorted(res, key=lambda x: x[1], reverse=True)
-    res = [(int(i[0]), DT[i[0]]) for i in res][:45]
+    res = [(int(i[0]), DT[i[0]]) for i in res][:10]
     return res
