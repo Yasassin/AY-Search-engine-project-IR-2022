@@ -241,6 +241,14 @@ def get_top_n(sim_dict, N=3):
 
 
 def candidates_by_body(tokens,terms_wights,index):
+    """
+    The function receive tokens of query, the wight of each term and the relevant index to use.
+    The function returns dict of scores according using cossin similarly with tfidf.
+    param tokens: list of strings, the terms from the query.
+    param terms_wights: dict string: float, the weight of each token.
+    param index: Inverted index, the relevant index to use
+    return: dict of string : float, doc_id: score
+    """
     tf_idf_q = generate_query_tfidf_vector(tokens,terms_wights, index)
     document_tfidf_matrix = generate_document_tfidf_matrix(tokens,terms_wights, index)
     cosine_similarity_dict = cosine_similarity(document_tfidf_matrix, tf_idf_q)
@@ -248,6 +256,12 @@ def candidates_by_body(tokens,terms_wights,index):
 
 
 def get_top_100_docs_by_body(q):
+    """
+    The function receive string and retrieve the 100 top docs by tfidf and cossin similarly based on the body of the docs.
+    The function give equal weight to each token after the initial filtering of stop words.
+    param q: string, the query to search
+    return: list of (int,string), list of (doc_id,doc_title) sorted in descending order according to the score.
+    """
     tokens = [token.group() for token in RE_WORD.finditer(q.lower()) if token.group() not in all_stopwords]
     terms_wights = {term: 1 for term in tokens}
     res = [(i[0], DT[i[0]]) for i in get_top_n(candidates_by_body(tokens,terms_wights,index_body), 100)]
@@ -255,6 +269,15 @@ def get_top_100_docs_by_body(q):
 
 
 def candidates_by_title_or_anchore(query_to_search, terms_wights, index, binary=True):
+    """
+    The function receive tokens of query, the wight of each term and the relevant index to use.
+    The function returns dict of scores according to whether the word apper or not.
+    param tokens: list of strings, the terms from the query.
+    param terms_wights: dict string: float, the weight of each token.
+    param index: Inverted index, the relevant index to use
+    param binary: bool, whether to use it as binary score or not.
+    return: dict of string : float, doc_id: score
+    """
     candidates = {}
     for term in np.unique(query_to_search):
         if term in index.df.keys():
@@ -270,6 +293,12 @@ def candidates_by_title_or_anchore(query_to_search, terms_wights, index, binary=
 
 
 def get_top_docs_by_title(q):
+    """
+    The function receive string and retrieve docs by whether the word apper or not based on the title of the docs.
+    The function give equal weight to each token after the initial filtering of stop words.
+    param q: string, the query to search
+    return: list of (int,string), list of (doc_id,doc_title) sorted in descending order according to the score.
+    """
     tokens = [token.group() for token in RE_WORD.finditer(q.lower()) if token.group() not in all_stopwords]
     tokens = list(set(tokens))
     terms_wights = {term: 1 for term in tokens}
@@ -279,6 +308,12 @@ def get_top_docs_by_title(q):
 
 
 def get_top_docs_by_anchor(q):
+    """
+    The function receive string and retrieve docs by whether the word apper or not based on the anchor of the docs.
+    The function give equal weight to each token after the initial filtering of stop words.
+    param q: string, the query to search
+    return: list of (int,string), list of (doc_id,doc_title) sorted in descending order according to the score.
+    """
     tokens = [token.group() for token in RE_WORD.finditer(q.lower()) if token.group() not in all_stopwords]
     tokens = list(set(tokens))
     terms_wights = {term: 1 for term in tokens}
@@ -288,14 +323,39 @@ def get_top_docs_by_anchor(q):
 
 
 def get_page_rank(docs):
+    """
+    The function receive list of docs and return their matching PageRank score
+    Args:
+        docs: list of int, list of doc_id
+
+    Returns: list of int, list of PageRank
+
+    """
     return [PR.get(i, 0) for i in docs]
 
 
 def get_page_views(docs):
-    return [pageviews.get(i,0) for i in docs]
+    """
+    The function receive list of docs and return their matching number of page views
+    Args:
+        docs: list of int, list of doc_id
+
+    Returns: list of int, list of page views
+
+    """
+    return [pageviews.get(i, 0) for i in docs]
 
 
 def find_top_n_similar_words(word, n):
+    """
+    The function receive word and return the top n words that are similar to the word by WordNet score
+    Args:
+        word: string, the word
+        n: int, number of words to return
+
+    Returns: list of strings, list of similar words sorted form the most similar to lest similar
+
+    """
     res = []
     try:
         for syn in wordnet.synsets(word):
@@ -312,27 +372,54 @@ def find_top_n_similar_words(word, n):
 
 
 def AY_Search(q, w1 = 1, w2 = 1, w3 = 0.25, w4 = 1,wn = 1.16):
+    """
+    The function find the most relevant documents, from Wikipedia corpus, to a specific query based on the query, the
+    title, body and anchor of a doc.
+    Args:
+        q: string, the query to search
+        w1: float, The weight of the body scores
+        w2: float, The weight of the title scores
+        w3: float, The weight of the anchor scores
+        w4: float, The weight of the PageRank scores
+        wn: float, The weight of nouns
+
+    Returns: list of tuple (int, string), list of relevant documents in the form (doc_id,doc_title) sorted in their relevance
+    """
+    # Create alist of tokens using regular expression
     org_tokens = [token.group() for token in RE_WORD.finditer(q.lower())]
+
+    # Using nltk to analysis the role of each term in the query
     pos_tagged = nltk.pos_tag(org_tokens)
 
     # Extracting Nouns
     nouns = np.unique([word.lower() for word, tag in pos_tagged if tag.startswith("N")])
+
+    # Extracting tokens that are not stop words
     tokens = [token for token in org_tokens if token not in all_stopwords and token in index_body.df.keys()]
 
+    # Create list of stemmed tokens
     stem_tokens = [stemmer.stem(token) for token in tokens]
+
+    # initial the weight of the terms to be 1
     terms_wights = {term: 1 for term in tokens}
     terms_wights_with_stem = {term: 1 for term in stem_tokens}
+
+    # increase the weight of nouns
     for token in tokens:
         if token in nouns:
             terms_wights_with_stem[stemmer.stem(token)] = wn
             terms_wights[token] = wn
+
+    # Expan the query of single term with another word with lower weight
     if len(tokens) == 1:
         for term in find_top_n_similar_words(tokens[0],1):
             tokens.append(term)
             stem_tokens.append(stemmer.stem(term))
             terms_wights_with_stem[stemmer.stem(term)] = 0.05
             terms_wights[term] = 0.05
+    # Check if the query has 'Geo' connection
     if len([term for term in org_tokens if term in location_queries['all']]) > 0:
+        # if so, add words that can help find locations and search only within the body
         for term in location_queries['city and country']:
             if term not in tokens:
                 tokens.append(term)
@@ -341,16 +428,21 @@ def AY_Search(q, w1 = 1, w2 = 1, w3 = 0.25, w4 = 1,wn = 1.16):
         res = []
         for k,v in score_body.items():
             res.append((k,score_body.get(k, 0) + PR.get(k, 0)))
+        # Sort by the relevance score
         res = sorted(res, key=lambda x: x[1], reverse=True)
         res = [(i[0], DT[i[0]]) for i in res][:45]
         return res
+
+    # else, calculate scores for each part of the doc
     score_body = candidates_by_body(tokens,terms_wights, index_body)
     score_anchor = candidates_by_title_or_anchore(tokens, terms_wights, index_anchor)
     score_title = candidates_by_title_or_anchore(stem_tokens, terms_wights_with_stem, index_stem_title)
     res = []
     docs = np.unique(list(score_title.keys()) + list(score_body.keys()))
     for d in docs:
+        # combine the score of each part with the matching weight
         res.append((d,w1*score_title.get(d,0)+w2*score_body.get(d,0)+w3*score_anchor.get(d,0)+w4*NPR.get(d,0)))
+    # Sort by the relevance score
     res = sorted(res, key=lambda x: x[1], reverse=True)
     res = [(int(i[0]), DT[i[0]]) for i in res][:45]
     return res
