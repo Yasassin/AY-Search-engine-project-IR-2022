@@ -69,7 +69,7 @@ def Model1(q):
     tokens = list(np.unique(tokens))
     terms_wights = {term: 1 for term in tokens}
     res = sorted([(k,v) for k,v in candidates_by_title_or_anchore(tokens,terms_wights, index_title).items()],key=lambda x:x[1],reverse=True)
-    res = [(int(i[0]), DT.get(i[0], "No-Title")) for i in res]
+    res = [(int(i[0]), DT.get(i[0], "No-Title")) for i in res][:10]
     return res
 
 
@@ -79,7 +79,7 @@ def Model2(q, w = 0.5):
     terms_wights = {term: 1 for term in tokens}
     score_title = candidates_by_title_or_anchore(tokens,terms_wights, index_title,binary=False)
     res = sorted([(k, w*v+(1-w)*NPR.get(k, 0)) for k, v in score_title.items()],key=lambda x: x[1],reverse=True)
-    res = [(i[0], DT[i[0]]) for i in res]
+    res = [(i[0], DT[i[0]]) for i in res][:10]
     return res
 
 
@@ -95,7 +95,7 @@ def Model3(q, w1 = 0.75, w2 = 1, w3 = 0.25, w4 = 0.1):
     for d in docs:
         res.append((d,w1*score_title.get(d,0)+w2*score_body.get(d,0)+w3*score_anchor.get(d,0)+w4*NPR.get(d,0)))
     res = sorted(res, key=lambda x: x[1], reverse=True)
-    res = [(i[0], DT[i[0]]) for i in res]
+    res = [(i[0], DT[i[0]]) for i in res][:10]
     return res
 
 
@@ -117,7 +117,7 @@ def Model4(q, w1 = 0.75, w2 = 1, w3 = 0.25, w4 = 0.1):
     for d in docs:
         res.append((d,w1*score_title.get(d,0)+w2*score_body.get(d,0)+w3*score_anchor.get(d,0)+w4*NPR.get(d,0)))
     res = sorted(res, key=lambda x: x[1], reverse=True)
-    res = [(i[0], DT[i[0]]) for i in res]
+    res = [(i[0], DT[i[0]]) for i in res][:10]
     return res
 
 
@@ -143,7 +143,7 @@ def Model5(q, w1 = 0.75, w2 = 1, w3 = 0.25, w4 = 0.1):
     for d in docs:
         res.append((d,w1*score_title.get(d,0)+w2*score_body.get(d,0)+w3*score_anchor.get(d,0)+w4*NPR.get(d,0)))
     res = sorted(res, key=lambda x: x[1], reverse=True)
-    res = [(i[0], DT[i[0]]) for i in res]
+    res = [(i[0], DT[i[0]]) for i in res][:10]
     return res
 
 
@@ -183,7 +183,7 @@ def Model6(q,w1 = 1, w2 = 1, w3 = 0.25, w4 = 1):
     for d in docs:
         res.append((d,w1*score_title.get(d,0)+w2*score_body.get(d,0)+w3*score_anchor.get(d,0)+w4*NPR.get(d,0)))
     res = sorted(res, key=lambda x: x[1], reverse=True)
-    res = [(int(i[0]), DT[i[0]]) for i in res][:45]
+    res = [(int(i[0]), DT[i[0]]) for i in res][:10]
     return res
 
 
@@ -219,7 +219,7 @@ def Model7(q, w1 = 1, w2 = 1, w3 = 0.25, w4 = 1,wn = 1.16):
         for k,v in score_body.items():
             res.append((k,score_body.get(k, 0) + PR.get(k, 0)))
         res = sorted(res, key=lambda x: x[1], reverse=True)
-        res = [(i[0], DT[i[0]]) for i in res][:45]
+        res = [(i[0], DT[i[0]]) for i in res][:10]
         return res
     score_body = candidates_by_body(tokens,terms_wights, index_body)
     score_anchor = candidates_by_title_or_anchore(tokens, terms_wights, index_anchor)
@@ -229,7 +229,7 @@ def Model7(q, w1 = 1, w2 = 1, w3 = 0.25, w4 = 1,wn = 1.16):
     for d in docs:
         res.append((d,w1*score_title.get(d,0)+w2*score_body.get(d,0)+w3*score_anchor.get(d,0)+w4*NPR.get(d,0)))
     res = sorted(res, key=lambda x: x[1], reverse=True)
-    res = [(int(i[0]), DT[i[0]]) for i in res][:45]
+    res = [(int(i[0]), DT[i[0]]) for i in res][:10]
     return res
 
 
